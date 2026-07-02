@@ -53,6 +53,25 @@
   details.helper summary{cursor:pointer;color:var(--accent);font-size:12px;user-select:none}
   details.helper .helpbody{background:#0e1428;border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:8px;line-height:1.7}
   details.helper code{background:#1b2340;border-radius:5px;padding:1px 5px;font-size:11px}
+  /* ---------- landing page ---------- */
+  .lp{max-width:860px;margin:0 auto;text-align:center;padding:30px 0 10px}
+  .lp h2{font-size:34px;margin:18px 0 10px;line-height:1.25}
+  .lp .sub{color:var(--muted);font-size:16px;max-width:640px;margin:0 auto 26px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0;text-align:left}
+  @media(max-width:720px){.steps{grid-template-columns:1fr}}
+  .step{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:18px}
+  .step b{display:block;margin-bottom:6px}
+  .step span{color:var(--muted);font-size:13px}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px auto 0;max-width:640px;text-align:left}
+  @media(max-width:720px){.pgrid{grid-template-columns:1fr}}
+  .pcard{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:22px;position:relative}
+  .pcard.featured{border-color:var(--brand)}
+  .ptag{position:absolute;top:-11px;left:18px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#241800;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px}
+  .pname{font-weight:800}
+  .pprice{font-size:34px;font-weight:800;margin:6px 0}
+  .pprice span{font-size:14px;color:var(--muted);font-weight:400}
+  .pcard ul{list-style:none;margin:10px 0 16px;padding:0;font-size:13px;color:var(--muted)}
+  .pcard li{margin:7px 0}
   .qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
   #qr{width:150px;height:150px;flex:0 0 150px;background:#fff;border-radius:12px;padding:8px;display:grid;place-items:center;overflow:hidden}
   #qr img,#qr canvas{width:100%;height:100%;object-fit:contain;display:block}
@@ -145,14 +164,28 @@ function genMessages(cfg){
 /* =========================================================================
    ROUTER
    ========================================================================= */
+/* Admin gate: the setup dashboard only opens with the secret key link
+   (#setup=<key>). Only the SHA-256 fingerprint of the key lives in this file,
+   so the key cannot be recovered from the source. Opening the local file
+   directly (file://) is always allowed - that's the owner's machine. */
+const ADMIN_HASH='a00accd83f1410eba459cede6d3721a25b12984262ecc52698f07b0602f1f1ce';
 function route(){
   const h = location.hash;
   if(h.startsWith('#f=')){
-    try{ renderFunnel(dec(h.slice(3))); }
-    catch(e){ renderBuilder(); }
-  } else {
-    renderBuilder();
+    try{ renderFunnel(dec(h.slice(3))); return; }
+    catch(e){ renderLanding(); return; }
   }
+  if(h.startsWith('#setup=')){ checkKey(decodeURIComponent(h.slice(7))); return; }
+  if(location.protocol==='file:' || sessionStorage.getItem('fs.ok')==='1'){ renderBuilder(); return; }
+  renderLanding();
+}
+async function checkKey(key){
+  try{
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
+    const hex = [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    if(hex === ADMIN_HASH){ sessionStorage.setItem('fs.ok','1'); renderBuilder(); return; }
+  }catch(e){ /* no crypto -> treat as wrong key */ }
+  renderLanding();
 }
 window.addEventListener('hashchange',route);
 
@@ -517,6 +550,60 @@ function renderInactive(cfg){
     </div>
   </div>
   <div class="foot" style="margin-top:26px">Powered by FiveStar Funnel</div>`;
+}
+
+/* =========================================================================
+   PUBLIC LANDING PAGE (default view for visitors without the admin key)
+   ========================================================================= */
+function renderLanding(){
+  document.documentElement.style.setProperty('--brand','#ffb400');
+  $('#app').innerHTML = `
+  <div class="wrap">
+    <div class="brandbar">
+      <div class="logo">\u2b50</div>
+      <h1>FiveStar Funnel</h1>
+    </div>
+    <div class="lp">
+      <h2>More 5-star Google reviews.<br/>Fewer public complaints.</h2>
+      <p class="sub">Your customers scan a QR code and rate their visit. Happy ones are guided straight to your Google review page \u2014 unhappy ones reach you privately by email, so you can make it right before it becomes a public 1-star.</p>
+      <button class="btn" id="demoBtn">See what your customers experience \u2192</button>
+      <div class="steps">
+        <div class="step"><b>1 \u00b7 We set it up</b><span>Your branded review page, QR code and printable table cards \u2014 done for you within 24 hours.</span></div>
+        <div class="step"><b>2 \u00b7 Customers scan</b><span>4\u20135\u2605 visitors land on your Google review page. 1\u20133\u2605 feedback comes to you privately.</span></div>
+        <div class="step"><b>3 \u00b7 You grow</b><span>More reviews \u2192 higher ranking on Google Maps \u2192 more customers walking in.</span></div>
+      </div>
+      <div class="pgrid">
+        <div class="pcard featured">
+          <div class="ptag">Most popular</div>
+          <div class="pname">Monthly</div>
+          <div class="pprice">$19<span>/month</span></div>
+          <ul>
+            <li>\u2705 30 days free \u2014 cancel anytime</li>
+            <li>\u2705 Full setup done for you</li>
+            <li>\u2705 QR code + printable table cards</li>
+            <li>\u2705 Private bad-review interception</li>
+            <li>\u2705 Ready-to-send request messages</li>
+          </ul>
+          <a class="btn block" href="https://buy.stripe.com/fZudR1cq20IW2Ie0015wI00" target="_blank" rel="noopener">Start free for 30 days \u2192</a>
+        </div>
+        <div class="pcard">
+          <div class="pname">Annual</div>
+          <div class="pprice">$190<span>/year</span></div>
+          <ul>
+            <li>\u2705 2 months free vs monthly</li>
+            <li>\u2705 Everything in Monthly</li>
+            <li>\u2705 One payment, zero hassle</li>
+          </ul>
+          <a class="btn block secondary" href="https://buy.stripe.com/8x214f9dQ63g5UqbIJ5wI01" target="_blank" rel="noopener">Get annual \u2192</a>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:22px">Questions first? Email <a href="mailto:Johnny.liu.gu@gmail.com">Johnny.liu.gu@gmail.com</a> for a free demo set up for your business.</p>
+    </div>
+    <div class="foot">FiveStar Funnel</div>
+  </div>`;
+  $('#demoBtn').onclick = ()=>{
+    location.hash = '#f='+enc({name:'Demo Cafe',emoji:'\u2615',color:'#ffb400',threshold:4,google:'https://www.google.com/maps',email:'',alias:'',id:'',tone:'warm'});
+  };
 }
 
 route();
