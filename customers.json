@@ -1,0 +1,6 @@
+{
+  "_readme": "Your paying customers. Add an ID here to activate a funnel, remove it to shut one off (takes effect within ~10 min due to caching). IDs must match the Customer ID field used when generating the customer's link.",
+  "active": [
+    "demo"
+  ]
+}

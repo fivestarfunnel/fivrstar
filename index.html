@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveStar Funnel — Get more 5★ Google reviews</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#141a2e; --card2:#1b2340; --ink:#eaf0ff; --muted:#9aa8cf;
+    --line:#28325a; --brand:#ffb400; --brand2:#ff8a00; --good:#2fd27a; --bad:#ff5470;
+    --accent:#5b8cff; --shadow:0 12px 40px rgba(0,0,0,.45);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 80% -10%,#1a2246 0,transparent 60%),var(--bg);
+    color:var(--ink); min-height:100vh; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent)}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 18px 80px}
+  .brandbar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
+  .brandbar h1{font-size:20px;margin:0;letter-spacing:.2px}
+  .brandbar .tag{color:var(--muted);font-size:13px;margin-left:auto}
+  .hero{margin:14px 0 22px}
+  .hero h2{font-size:26px;margin:0 0 6px}
+  .hero p{color:var(--muted);margin:0;max-width:720px}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+  input,textarea,select{width:100%;background:#0e1428;border:1px solid var(--line);color:var(--ink);
+    border-radius:11px;padding:11px 12px;font-size:14px;font-family:inherit}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+  textarea{resize:vertical;min-height:80px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+    border:none;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));color:#241800;box-shadow:var(--shadow)}
+  .btn:hover{filter:brightness(1.05)}
+  .btn.secondary{background:#0e1428;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn.block{width:100%}
+  .btn.small{padding:8px 12px;font-size:13px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  details.helper{margin-top:8px;font-size:12px;color:var(--muted)}
+  details.helper summary{cursor:pointer;color:var(--accent);font-size:12px;user-select:none}
+  details.helper .helpbody{background:#0e1428;border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:8px;line-height:1.7}
+  details.helper code{background:#1b2340;border-radius:5px;padding:1px 5px;font-size:11px}
+  .qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  #qr{width:150px;height:150px;flex:0 0 150px;background:#fff;border-radius:12px;padding:8px;display:grid;place-items:center;overflow:hidden}
+  #qr img,#qr canvas{width:100%;height:100%;object-fit:contain;display:block}
+  .qrbox{align-items:flex-start}
+  .linkbox{display:flex;gap:8px;margin-top:8px}
+  .linkbox input{font-size:12px}
+  .pill{display:inline-block;background:#0e1428;border:1px solid var(--line);border-radius:999px;
+    padding:5px 11px;font-size:12px;color:var(--muted);margin:0 6px 6px 0;cursor:pointer}
+  .pill.active{border-color:var(--brand);color:var(--brand)}
+  .msgout{background:#0e1428;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;white-space:pre-wrap}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+  .stat .s{background:#0e1428;border:1px solid var(--line);border-radius:12px;padding:12px 14px;flex:1;min-width:120px}
+  .stat .s b{font-size:22px;display:block}
+  .stat .s span{color:var(--muted);font-size:12px}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0e1428;border:1px solid var(--brand);
+    color:var(--ink);padding:11px 18px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1}
+  /* ---------- Customer funnel mode ---------- */
+  .funnel{max-width:520px;margin:0 auto;padding:40px 20px;text-align:center}
+  .funnel .biz{font-size:24px;font-weight:800;margin:14px 0 2px}
+  .funnel .ask{color:var(--muted);margin:0 0 26px}
+  .stars{display:flex;justify-content:center;gap:8px;margin:10px 0 8px}
+  .star{font-size:44px;cursor:pointer;filter:grayscale(1);opacity:.55;transition:.12s;transform:scale(1)}
+  .star:hover,.star.lit{filter:none;opacity:1;transform:scale(1.12)}
+  .fcard{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:22px;padding:30px 24px;box-shadow:var(--shadow)}
+  .fhide{display:none}
+  .success h2{margin:6px 0}
+  .biglogo{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:grid;place-items:center;font-size:34px;margin:0 auto 8px;box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+<!-- ============ APP ROOT ============ -->
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   FiveStar Funnel — single-file, zero-backend review funnel.
+   Two modes decided by URL hash:
+     • Owner/dashboard mode (no hash / #build)
+     • Customer funnel mode (#f=<base64 config>)  ← the link owners share
+   All config is stored in the URL, so there is nothing to host or pay for.
+   ========================================================================= */
+
+const $ = (s,r=document)=>r.querySelector(s);
+const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec = s => JSON.parse(decodeURIComponent(escape(atob(s))));
+const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); };
+
+/* ---------- local persistence for the owner's own settings ---------- */
+const STORE='fivestar.cfg.v1';
+const loadCfg=()=>{ try{return JSON.parse(localStorage.getItem(STORE))||{}}catch(e){return {}} };
+const saveCfg=c=>localStorage.setItem(STORE,JSON.stringify(c));
+
+/* ---------- AI-style message generator ----------
+   Real, ready-to-send copy across channels. Tone + channel change the output. */
+function genMessages(cfg){
+  const b = cfg.name || 'our business';
+  const link = '[your review link]';
+  const first = '{first_name}';
+  const tones = {
+    warm:{
+      sms:`Hi ${first}! Thanks so much for visiting ${b} 😊 If we made your day a little better, a quick review means the world to our small team: ${link}`,
+      email_subject:`Thank you from all of us at ${b} 💛`,
+      email:`Hi ${first},\n\nThank you for choosing ${b} — it genuinely made our day to serve you.\n\nWe're a small team and Google reviews are how new customers find us. If you have 30 seconds, we'd be so grateful for a quick review:\n\n👉 ${link}\n\nWith gratitude,\nThe ${b} team`,
+      whatsapp:`Hey ${first}! 👋 Loved having you at ${b} today. A quick review helps our small business a ton 🙏 ${link}`,
+      card:`Enjoyed your visit? ⭐ Scan the code or tap the link to leave ${b} a quick review — it truly helps our small team. Thank you!`
+    },
+    professional:{
+      sms:`Hello ${first}, thank you for choosing ${b}. We'd appreciate your feedback — it takes under a minute: ${link}`,
+      email_subject:`How was your experience with ${b}?`,
+      email:`Hello ${first},\n\nThank you for your recent visit to ${b}. Your feedback helps us maintain our standard of service and helps others find us.\n\nWould you take a moment to share your experience?\n\n${link}\n\nWe appreciate your time.\n\nKind regards,\n${b}`,
+      whatsapp:`Hello ${first}, thank you for visiting ${b}. We'd value your feedback: ${link}`,
+      card:`We hope you had a great experience. Please scan to share a quick review of ${b}. Thank you for your business.`
+    },
+    casual:{
+      sms:`Yo ${first}! 🙌 Hope ${b} treated you right. Mind dropping us a quick star rating? Takes 20 secs: ${link}`,
+      email_subject:`Quick favor? ⭐ (20 seconds)`,
+      email:`Hey ${first},\n\nHope you loved your visit to ${b}! Quick favor — a star rating helps way more than you'd think and takes about 20 seconds:\n\n${link}\n\nYou're the best 🤘\n${b}`,
+      whatsapp:`Hey ${first}! Hope ${b} was 🔥 — mind leaving a quick rating? ${link}`,
+      card:`Had a good time? Scan this & drop us a rating — takes 20 seconds and makes our day. Thanks! ⭐`
+    }
+  };
+  return tones[cfg.tone||'warm'];
+}
+
+/* =========================================================================
+   ROUTER
+   ========================================================================= */
+function route(){
+  const h = location.hash;
+  if(h.startsWith('#f=')){
+    try{ renderFunnel(dec(h.slice(3))); }
+    catch(e){ renderBuilder(); }
+  } else {
+    renderBuilder();
+  }
+}
+window.addEventListener('hashchange',route);
+
+/* =========================================================================
+   OWNER / DASHBOARD MODE
+   ========================================================================= */
+function renderBuilder(){
+  const cfg = Object.assign({name:'',google:'',color:'#ffb400',emoji:'⭐',tone:'warm',threshold:4,email:'',alias:'',id:''}, loadCfg());
+  const app = $('#app');
+  app.innerHTML = `
+  <div class="wrap">
+    <div class="brandbar">
+      <div class="logo">⭐</div>
+      <h1>FiveStar Funnel</h1>
+      <div class="tag">Turn happy customers into 5★ Google reviews</div>
+    </div>
+    <div class="hero">
+      <h2>Set up your review funnel in 60 seconds</h2>
+      <p>Customers rate you first. 4–5★ go straight to Google; 1–3★ are quietly routed to a private message so bad reviews never hit your public page. No app, no login for your customers — just one link and a QR code.</p>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: setup -->
+      <div class="card">
+        <h3>1 · Your business</h3>
+        <p class="sub">This shows on the page your customers see.</p>
+        <label>Business name</label>
+        <input id="name" placeholder="e.g. Bella's Cafe" value="${esc(cfg.name)}" />
+        <label>Your Google review link <span title="Google Business Profile → Ask for reviews → copy link">ⓘ</span></label>
+        <input id="google" placeholder="https://g.page/r/…  or  https://search.google.com/local/writereview?placeid=…" value="${esc(cfg.google)}" />
+        <details class="helper">
+          <summary>Can't find the review link? Open this →</summary>
+          <div class="helpbody">
+            <b>Easiest — build it from a Place ID:</b><br/>
+            1. Open Google's free <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noopener">Place ID Finder</a><br/>
+            2. Search the business name → copy the <i>Place ID</i> (looks like <code>ChIJ…</code>)<br/>
+            3. Paste it here:
+            <div class="row" style="margin-top:6px">
+              <input id="pid" placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4" />
+              <button class="btn small secondary" id="buildPid" type="button" style="flex:0 0 auto">Build link</button>
+            </div>
+            <div style="margin-top:10px"><b>If the owner manages the business:</b> business.google.com → “Ask for reviews” → copy link.</div>
+            <div style="margin-top:6px"><b>Quick fallback:</b> paste the business's Google Maps share link — customers land on the listing and tap “Write a review”.</div>
+          </div>
+        </details>
+
+        <div class="row">
+          <div>
+            <label>Brand emoji</label>
+            <input id="emoji" value="${esc(cfg.emoji)}" maxlength="2" />
+          </div>
+          <div>
+            <label>Accent color</label>
+            <input id="color" type="color" value="${esc(cfg.color)}" style="height:44px;padding:4px" />
+          </div>
+          <div>
+            <label>Route to Google at…</label>
+            <select id="threshold">
+              <option value="4" ${cfg.threshold==4?'selected':''}>4★ and up</option>
+              <option value="5" ${cfg.threshold==5?'selected':''}>5★ only</option>
+              <option value="3" ${cfg.threshold==3?'selected':''}>3★ and up</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Where should private (1–${(cfg.threshold||4)-1}★) feedback go?</label>
+        <input id="email" placeholder="you@yourbusiness.com" value="${esc(cfg.email)}" />
+        <div class="hint">Unhappy customers' notes arrive by email automatically — no mail app needed. The very first note triggers a one-time “Activate” email to this address (free FormSubmit relay); click it once and you're set.</div>
+
+        <label>FormSubmit alias <span style="opacity:.7">(optional — hides your email)</span></label>
+        <input id="alias" placeholder="e.g. bb6abadd63cb2053f55fc91d29273388" value="${esc(cfg.alias)}" />
+        <div class="hint">Found in your FormSubmit activation email (“use this random-like string…”). With an alias, feedback is relayed through it so your email address never appears inside the share link.</div>
+
+        <label>Customer ID <span style="opacity:.7">(optional — subscription lock)</span></label>
+        <input id="custid" placeholder="e.g. bella-cafe" value="${esc(cfg.id)}" />
+        <div class="hint">For paying customers: give each one a short ID and list it in <code style="background:#1b2340;border-radius:4px;padding:1px 5px">customers.json</code> next to this file on your host. Remove the ID from that list and their funnel shuts off. Leave empty for demos — no check is done.</div>
+
+        <div style="margin-top:16px" class="row">
+          <button class="btn block" id="gen">Generate my link & QR →</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: output -->
+      <div class="card">
+        <h3>2 · Share it</h3>
+        <p class="sub">Put the QR on receipts, tables, the counter, or text the link after a visit.</p>
+        <div class="qrbox">
+          <div id="qr"><span style="color:#888;font-size:12px">QR appears here</span></div>
+          <div style="flex:1;min-width:180px">
+            <label style="margin-top:0">Your shareable review link</label>
+            <div class="linkbox">
+              <input id="shareUrl" readonly placeholder="Generate to create your link" />
+              <button class="btn small" id="copyLink">Copy</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn small secondary" id="preview">Preview</button>
+              <button class="btn small secondary" id="dlqr">Download QR</button>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn small" id="printCards">🖨️ Print table cards</button>
+            </div>
+            <div class="hint">Prints ready-to-cut “Loved your visit? Scan me ⭐” cards + a window sticker — hand these to businesses.</div>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:20px 0" />
+        <h3>3 · Ready-to-send messages</h3>
+        <p class="sub">AI-written request copy. Pick a tone + channel, tap copy, paste into your texts/emails. Replace {first_name}.</p>
+        <div id="tones">
+          ${['warm','professional','casual'].map(t=>`<span class="pill ${cfg.tone===t?'active':''}" data-tone="${t}">${t}</span>`).join('')}
+        </div>
+        <div id="channels" style="margin-top:6px">
+          ${['sms','email','whatsapp','card'].map((c,i)=>`<span class="pill ${i===0?'active':''}" data-ch="${c}">${c==='card'?'table card':c}</span>`).join('')}
+        </div>
+        <div class="msgout" id="msgout" style="margin-top:10px"></div>
+        <button class="btn small secondary" id="copyMsg" style="margin-top:10px">Copy message</button>
+      </div>
+    </div>
+
+    <div class="foot">
+      FiveStar Funnel · 100% runs in your browser — nothing is uploaded, no account needed.<br/>
+      Your settings are saved on this device only.
+    </div>
+  </div>`;
+
+  // ---- wire up ----
+  let curTone = cfg.tone||'warm', curCh='sms', lastUrl='';
+  const readForm = ()=>({
+    name:$('#name').value.trim(), google:$('#google').value.trim(),
+    color:$('#color').value, emoji:$('#emoji').value||'⭐',
+    tone:curTone, threshold:+$('#threshold').value, email:$('#email').value.trim(),
+    alias:$('#alias').value.trim(),
+    id:$('#custid').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-')
+  });
+  const refreshMsg = ()=>{
+    const c = readForm(); const m = genMessages(c);
+    const map = { sms:m.sms, email:`Subject: ${m.email_subject}\n\n${m.email}`, whatsapp:m.whatsapp, card:m.card };
+    $('#msgout').textContent = map[curCh].replace('[your review link]', lastUrl || '[generate your link first]');
+  };
+  const build = ()=>{
+    const c = readForm();
+    if(!c.name){ toast('Add your business name first'); return; }
+    saveCfg(c);
+    const url = location.origin + location.pathname + '#f=' + enc(c);
+    lastUrl = url;
+    $('#shareUrl').value = url;
+    makeQR(url);
+    refreshMsg();
+    toast('Link + QR ready ✓');
+  };
+
+  $('#gen').onclick = build;
+  $('#tones').onclick = e=>{ if(e.target.dataset.tone){ curTone=e.target.dataset.tone;
+    [...$('#tones').children].forEach(p=>p.classList.toggle('active',p.dataset.tone===curTone)); refreshMsg(); } };
+  $('#channels').onclick = e=>{ if(e.target.dataset.ch){ curCh=e.target.dataset.ch;
+    [...$('#channels').children].forEach(p=>p.classList.toggle('active',p.dataset.ch===curCh)); refreshMsg(); } };
+  $('#copyMsg').onclick = ()=>{ navigator.clipboard.writeText($('#msgout').textContent); toast('Message copied'); };
+  $('#copyLink').onclick = ()=>{ if(!lastUrl){toast('Generate first');return;} navigator.clipboard.writeText(lastUrl); toast('Link copied'); };
+  $('#preview').onclick = ()=>{ if(!lastUrl){build();} if(lastUrl) window.open(lastUrl,'_blank'); };
+  $('#dlqr').onclick = downloadQR;
+  $('#printCards').onclick = ()=>{ if(!lastUrl){ build(); } if(lastUrl) printCards(readForm(), lastUrl); };
+  $('#buildPid').onclick = ()=>{
+    const v = $('#pid').value.trim();
+    if(!v){ toast('Paste a Place ID first'); return; }
+    $('#google').value = 'https://search.google.com/local/writereview?placeid='+encodeURIComponent(v);
+    toast('Review link built ✓ — now hit Generate');
+  };
+
+  refreshMsg();
+  if(cfg.name){ build(); } // auto-restore last link
+}
+
+function esc(s){ return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ---------- QR generation (CDN with graceful fallback) ---------- */
+let _qrImgData='';
+function makeQR(url){
+  const box = $('#qr'); box.innerHTML='';
+  // Use a well-known free QR image endpoint; robust and no build step.
+  const img = new Image();
+  img.crossOrigin='anonymous';
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data='+encodeURIComponent(url);
+  img.onload = ()=>{ box.appendChild(img); _qrImgData=img.src; };
+  img.onerror = ()=>{ box.innerHTML='<div style="font-size:11px;color:#888;padding:8px">QR needs internet. Your link still works — copy it above.</div>'; };
+}
+function downloadQR(){
+  if(!_qrImgData){ toast('Generate your link first'); return; }
+  const a=document.createElement('a'); a.href=_qrImgData; a.download='fivestar-qr.png';
+  a.target='_blank'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- Printable table cards + window sticker ---------- */
+function printCards(cfg, url){
+  const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data='+encodeURIComponent(url);
+  const name = esc(cfg.name||'Our business');
+  const color = cfg.color||'#ffb400';
+  const card = (variant)=>`
+    <div class="card ${variant}">
+      <div class="hdr">${cfg.emoji||'⭐'} ${name}</div>
+      <div class="cta">Loved your visit?</div>
+      <img src="${qr}" alt="Scan to review"/>
+      <div class="scan">Scan to leave a quick review</div>
+      <div class="stars">★ ★ ★ ★ ★</div>
+    </div>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name} — review cards</title>
+  <style>
+    @page{size:letter;margin:0.4in}
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111}
+    .toolbar{position:fixed;top:0;left:0;right:0;background:#111;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;z-index:9}
+    .toolbar button{background:${color};border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+    .sheet{padding:70px 8px 8px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{border:2px dashed #ccc;border-radius:16px;padding:20px 16px;text-align:center;page-break-inside:avoid;
+      background:linear-gradient(180deg,#fff, ${color}14)}
+    .card .hdr{font-size:20px;font-weight:800;margin-bottom:6px}
+    .card .cta{font-size:26px;font-weight:800;color:${color};margin:6px 0 12px}
+    .card img{width:210px;height:210px}
+    .card .scan{font-size:14px;color:#444;margin-top:10px}
+    .card .stars{font-size:22px;color:${color};letter-spacing:3px;margin-top:6px}
+    /* window sticker spans both columns */
+    .sticker{grid-column:1 / -1;display:flex;align-items:center;gap:24px;text-align:left;justify-content:center}
+    .sticker img{width:150px;height:150px}
+    .sticker .cta{font-size:34px}
+    @media print{.toolbar{display:none}.sheet{padding-top:8px}}
+  </style></head><body>
+    <div class="toolbar">
+      <b>${name} — print your review cards</b>
+      <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+      <span style="opacity:.7;font-size:13px">4 table cards + 1 window sticker · cut along the dashed lines</span>
+    </div>
+    <div class="sheet">
+      ${card('')}${card('')}${card('')}${card('')}
+      <div class="card sticker">
+        <img src="${qr}" alt="Scan to review"/>
+        <div>
+          <div class="cta">Enjoyed ${name}?</div>
+          <div style="font-size:18px;color:#333">Scan to leave us a ★★★★★ review — it takes 20 seconds and means the world.</div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ toast('Allow pop-ups to print cards'); return; }
+  w.document.write(html); w.document.close();
+  toast('Cards opened — hit Print / Save as PDF');
+}
+
+/* =========================================================================
+   CUSTOMER FUNNEL MODE
+   ========================================================================= */
+function renderFunnel(cfg){
+  document.documentElement.style.setProperty('--brand', cfg.color||'#ffb400');
+  // ---- Subscription gate: funnels with a customer ID must be on the active
+  // list in customers.json (same folder). Fail-open on network errors so a
+  // host hiccup or offline preview never bricks paying customers.
+  if(cfg.id){
+    fetch('customers.json?v='+Date.now())
+      .then(r=>r.ok ? r.json() : Promise.reject())
+      .then(d=>{
+        if(!((d.active||[]).includes(cfg.id))) renderInactive(cfg);
+      })
+      .catch(()=>{}); // fail-open
+  }
+  const thr = cfg.threshold||4;
+  const app = $('#app');
+  app.innerHTML = `
+  <div class="funnel">
+    <div class="fcard" id="rate">
+      <div class="biglogo">${cfg.emoji||'⭐'}</div>
+      <div class="biz">${esc(cfg.name)}</div>
+      <p class="ask">How was your experience?</p>
+      <div class="stars" id="stars">
+        ${[1,2,3,4,5].map(n=>`<span class="star" data-n="${n}">★</span>`).join('')}
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:14px">Tap a star to rate us</p>
+    </div>
+
+    <div class="fcard fhide success" id="happy">
+      <div class="biglogo">🎉</div>
+      <h2>Thank you!</h2>
+      <p style="color:var(--muted)">We're so glad you had a great time. Would you share it on Google? It only takes a moment and means a lot to us.</p>
+      <a class="btn block" id="goGoogle" style="margin-top:14px" href="#">Leave a Google review →</a>
+    </div>
+
+    <div class="fcard fhide" id="unhappy">
+      <div class="biglogo">🙏</div>
+      <h2>We're sorry we missed the mark</h2>
+      <p style="color:var(--muted)">Please tell us what went wrong — it goes straight to the owner, privately, and we'll make it right.</p>
+      <textarea id="fb" placeholder="What could we have done better?" style="margin-top:12px"></textarea>
+      <button class="btn block" id="sendFb" style="margin-top:12px">Send private feedback</button>
+      <p class="fhide" id="fbthanks" style="color:var(--good);margin-top:12px">Thank you — the owner has your note. 💛</p>
+    </div>
+  </div>
+  <div class="foot" style="margin-top:26px">Powered by FiveStar Funnel</div>`;
+
+  $('#stars').addEventListener('click', e=>{
+    const n = +(e.target.dataset.n||0); if(!n) return;
+    const stars=[...$('#stars').children]; stars.forEach((s,i)=>s.classList.toggle('lit',i<n));
+    setTimeout(()=>{
+      $('#rate').classList.add('fhide');
+      if(n>=thr){
+        $('#happy').classList.remove('fhide');
+        $('#goGoogle').href = cfg.google || 'https://www.google.com';
+      } else {
+        $('#unhappy').classList.remove('fhide');
+        $('#sendFb').onclick = async ()=>{
+          const txt = $('#fb').value.trim();
+          if(!txt){ $('#fb').focus(); return; }
+          const to = cfg.email || '';
+          const relay = cfg.alias || to; // alias hides the raw address from the link
+          const btn = $('#sendFb');
+          btn.disabled = true; btn.textContent = 'Sending…';
+          let sent = false;
+          if(relay){
+            // Silent background send via FormSubmit (free static-form relay).
+            // First-ever submission emails the owner a one-time activation link.
+            try{
+              const r = await fetch('https://formsubmit.co/ajax/'+encodeURIComponent(relay), {
+                method:'POST',
+                headers:{'Content-Type':'application/json','Accept':'application/json'},
+                body: JSON.stringify({
+                  _subject: `Private feedback for ${cfg.name} (${n}★)`,
+                  _template: 'table',
+                  _captcha: 'false',
+                  business: cfg.name,
+                  rating: `${n}/5`,
+                  feedback: txt
+                })
+              });
+              sent = r.ok;
+            }catch(e){ /* offline or blocked — fall through to mailto */ }
+          }
+          if(!sent && to){
+            // Fallback: open the mail app only if the silent send failed.
+            const subj = encodeURIComponent(`Private feedback for ${cfg.name} (${n}★)`);
+            const body = encodeURIComponent(`Rating: ${n}/5\n\n${txt}`);
+            location.href = `mailto:${to}?subject=${subj}&body=${body}`;
+          }
+          btn.classList.add('fhide');
+          $('#fb').disabled = true;
+          $('#fbthanks').classList.remove('fhide');
+        };
+      }
+    }, 260);
+  });
+  // hover preview
+  $('#stars').addEventListener('mouseover', e=>{
+    const n=+(e.target.dataset.n||0); if(!n)return;
+    [...$('#stars').children].forEach((s,i)=>s.classList.toggle('lit',i<n));
+  });
+}
+
+/* ---------- Inactive (unsubscribed) screen ---------- */
+function renderInactive(cfg){
+  $('#app').innerHTML = `
+  <div class="funnel">
+    <div class="fcard">
+      <div class="biglogo" style="filter:grayscale(1)">⏸️</div>
+      <div class="biz">${esc(cfg.name||'This page')}</div>
+      <p class="ask" style="margin-top:10px">This review page is currently inactive.</p>
+      <p style="color:var(--muted);font-size:13px">Business owner? Contact your provider to reactivate it.</p>
+    </div>
+  </div>
+  <div class="foot" style="margin-top:26px">Powered by FiveStar Funnel</div>`;
+}
+
+route();
+</script>
+</body>
+</html>
