@@ -160,7 +160,7 @@ window.addEventListener('hashchange',route);
    OWNER / DASHBOARD MODE
    ========================================================================= */
 function renderBuilder(){
-  const cfg = Object.assign({name:'',google:'',color:'#ffb400',emoji:'⭐',tone:'warm',threshold:4,email:''}, loadCfg());
+  const cfg = Object.assign({name:'',google:'',color:'#ffb400',emoji:'⭐',tone:'warm',threshold:4,email:'',alias:''}, loadCfg());
   const app = $('#app');
   app.innerHTML = `
   <div class="wrap">
@@ -222,6 +222,10 @@ function renderBuilder(){
         <input id="email" placeholder="you@yourbusiness.com" value="${esc(cfg.email)}" />
         <div class="hint">Unhappy customers' notes arrive by email automatically — no mail app needed. The very first note triggers a one-time “Activate” email to this address (free FormSubmit relay); click it once and you're set.</div>
 
+        <label>FormSubmit alias <span style="opacity:.7">(optional — hides your email)</span></label>
+        <input id="alias" placeholder="e.g. bb6abadd63cb2053f55fc91d29273388" value="${esc(cfg.alias)}" />
+        <div class="hint">Found in your FormSubmit activation email (“use this random-like string…”). With an alias, feedback is relayed through it so your email address never appears inside the share link.</div>
+
         <div style="margin-top:16px" class="row">
           <button class="btn block" id="gen">Generate my link & QR →</button>
         </div>
@@ -275,7 +279,8 @@ function renderBuilder(){
   const readForm = ()=>({
     name:$('#name').value.trim(), google:$('#google').value.trim(),
     color:$('#color').value, emoji:$('#emoji').value||'⭐',
-    tone:curTone, threshold:+$('#threshold').value, email:$('#email').value.trim()
+    tone:curTone, threshold:+$('#threshold').value, email:$('#email').value.trim(),
+    alias:$('#alias').value.trim()
   });
   const refreshMsg = ()=>{
     const c = readForm(); const m = genMessages(c);
@@ -441,14 +446,15 @@ function renderFunnel(cfg){
           const txt = $('#fb').value.trim();
           if(!txt){ $('#fb').focus(); return; }
           const to = cfg.email || '';
+          const relay = cfg.alias || to; // alias hides the raw address from the link
           const btn = $('#sendFb');
           btn.disabled = true; btn.textContent = 'Sending…';
           let sent = false;
-          if(to){
+          if(relay){
             // Silent background send via FormSubmit (free static-form relay).
             // First-ever submission emails the owner a one-time activation link.
             try{
-              const r = await fetch('https://formsubmit.co/ajax/'+encodeURIComponent(to), {
+              const r = await fetch('https://formsubmit.co/ajax/'+encodeURIComponent(relay), {
                 method:'POST',
                 headers:{'Content-Type':'application/json','Accept':'application/json'},
                 body: JSON.stringify({
