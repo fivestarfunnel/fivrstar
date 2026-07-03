@@ -101,6 +101,8 @@
     border-radius:22px;padding:30px 24px;box-shadow:var(--shadow)}
   .fhide{display:none}
   .success h2{margin:6px 0}
+  .ribbon{display:inline-block;background:#3a2f10;color:var(--brand);border:1px solid #665012;
+    border-radius:999px;padding:4px 14px;font-size:12px;font-weight:800;margin-bottom:14px}
   .biglogo{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,var(--brand),var(--brand2));
     display:grid;place-items:center;font-size:34px;margin:0 auto 8px;box-shadow:var(--shadow)}
 </style>
@@ -261,7 +263,7 @@ function renderBuilder(){
 
         <label>Customer ID <span style="opacity:.7">(optional — subscription lock)</span></label>
         <input id="custid" placeholder="e.g. bella-cafe" value="${esc(cfg.id)}" />
-        <div class="hint">For paying customers: give each one a short ID and list it in <code style="background:#1b2340;border-radius:4px;padding:1px 5px">customers.json</code> next to this file on your host. Remove the ID from that list and their funnel shuts off. Leave empty for demos — no check is done.</div>
+        <div class="hint">For paying customers: give each one a short ID and list it in <code style="background:#1b2340;border-radius:4px;padding:1px 5px">customers.json</code> next to this file on your host. Remove the ID from that list and their funnel shuts off. Leave empty for demos/trials — those links self-expire after 3 days. Only links with an ID are permanent.</div>
 
         <div style="margin-top:16px" class="row">
           <button class="btn block" id="gen">Generate my link & QR →</button>
@@ -329,12 +331,16 @@ function renderBuilder(){
     const c = readForm();
     if(!c.name){ toast('Add your business name first'); return; }
     saveCfg(c);
-    const url = location.origin + location.pathname + '#f=' + enc(c);
+    // No Customer ID -> trial link that self-expires in 3 days.
+    // With an ID -> permanent, governed by customers.json.
+    const out = Object.assign({}, c);
+    if(!out.id) out.exp = Date.now() + 3*864e5;
+    const url = location.origin + location.pathname + '#f=' + enc(out);
     lastUrl = url;
     $('#shareUrl').value = url;
     makeQR(url);
     refreshMsg();
-    toast('Link + QR ready ✓');
+    toast(out.exp ? 'Trial link ready — expires in 3 days ⏳' : 'Customer link + QR ready ✓');
   };
 
   $('#gen').onclick = build;
@@ -438,6 +444,8 @@ function printCards(cfg, url){
    ========================================================================= */
 function renderFunnel(cfg){
   document.documentElement.style.setProperty('--brand', cfg.color||'#ffb400');
+  // Demo links carry an expiry timestamp; an expired demo becomes a pitch.
+  if(cfg.exp && Date.now()>+cfg.exp){ renderExpiredDemo(); return; }
   // ---- Subscription gate: funnels with a customer ID must be on the active
   // list in customers.json (same folder). Fail-open on network errors so a
   // host hiccup or offline preview never bricks paying customers.
@@ -453,6 +461,7 @@ function renderFunnel(cfg){
   const app = $('#app');
   app.innerHTML = `
   <div class="funnel">
+    ${cfg.exp?('<div class="ribbon">Demo preview · expires in '+Math.max(1,Math.ceil((+cfg.exp-Date.now())/864e5))+' day'+(Math.ceil((+cfg.exp-Date.now())/864e5)>1?'s':'')+'</div>'):''}
     <div class="fcard" id="rate">
       <div class="biglogo">${cfg.emoji||'⭐'}</div>
       <div class="biz">${esc(cfg.name)}</div>
@@ -536,6 +545,20 @@ function renderFunnel(cfg){
     const n=+(e.target.dataset.n||0); if(!n)return;
     [...$('#stars').children].forEach((s,i)=>s.classList.toggle('lit',i<n));
   });
+}
+
+/* ---------- Expired demo screen ---------- */
+function renderExpiredDemo(){
+  $('#app').innerHTML = `
+  <div class="funnel">
+    <div class="fcard">
+      <div class="biglogo">🕐</div>
+      <h2 style="margin:6px 0">This demo has expired</h2>
+      <p style="color:var(--muted)">Liked what you saw? Your own review funnel can be live within 24 hours — QR code, printed table cards, full setup done for you.</p>
+      <button class="btn block" style="margin-top:14px" onclick="location.hash=''">See plans — first 30 days free →</button>
+    </div>
+  </div>
+  <div class="foot" style="margin-top:26px">Powered by FiveStar Funnel</div>`;
 }
 
 /* ---------- Inactive (unsubscribed) screen ---------- */
