@@ -334,13 +334,13 @@ function renderBuilder(){
     // No Customer ID -> trial link that self-expires in 3 days.
     // With an ID -> permanent, governed by customers.json.
     const out = Object.assign({}, c);
-    if(!out.id) out.exp = Date.now() + 3*864e5;
+    if(!out.id){ out.trial = 3; out.cap = Date.now() + 14*864e5; }
     const url = location.origin + location.pathname + '#f=' + enc(out);
     lastUrl = url;
     $('#shareUrl').value = url;
     makeQR(url);
     refreshMsg();
-    toast(out.exp ? 'Trial link ready — expires in 3 days ⏳' : 'Customer link + QR ready ✓');
+    toast(out.trial ? 'Trial link ready — dies 3 days after first open ⏳' : 'Customer link + QR ready ✓');
   };
 
   $('#gen').onclick = build;
@@ -444,8 +444,19 @@ function printCards(cfg, url){
    ========================================================================= */
 function renderFunnel(cfg){
   document.documentElement.style.setProperty('--brand', cfg.color||'#ffb400');
-  // Demo links carry an expiry timestamp; an expired demo becomes a pitch.
+  // Demo/trial links expire; an expired demo becomes a pitch.
+  // Legacy links: cfg.exp = fixed deadline. New links: cfg.trial = days
+  // counted from FIRST OPEN on this device, with cfg.cap as a hard ceiling.
   if(cfg.exp && Date.now()>+cfg.exp){ renderExpiredDemo(); return; }
+  if(cfg.trial){
+    if(cfg.cap && Date.now()>+cfg.cap){ renderExpiredDemo(); return; }
+    const k='fs.seen.'+(cfg.name||'')+'.'+(cfg.cap||'');
+    let first=+localStorage.getItem(k)||0;
+    if(!first){ first=Date.now(); try{localStorage.setItem(k,first);}catch(e){} }
+    const end=first + (+cfg.trial)*864e5;
+    if(Date.now()>end){ renderExpiredDemo(); return; }
+    cfg._end=end; // drives the ribbon countdown
+  }
   // ---- Subscription gate: funnels with a customer ID must be on the active
   // list in customers.json (same folder). Fail-open on network errors so a
   // host hiccup or offline preview never bricks paying customers.
@@ -461,7 +472,7 @@ function renderFunnel(cfg){
   const app = $('#app');
   app.innerHTML = `
   <div class="funnel">
-    ${cfg.exp?('<div class="ribbon">Demo preview · expires in '+Math.max(1,Math.ceil((+cfg.exp-Date.now())/864e5))+' day'+(Math.ceil((+cfg.exp-Date.now())/864e5)>1?'s':'')+'</div>'):''}
+    ${(cfg._end||cfg.exp)?('<div class="ribbon">Demo preview · expires in '+Math.max(1,Math.ceil(((cfg._end||+cfg.exp)-Date.now())/864e5))+' day'+(Math.ceil(((cfg._end||+cfg.exp)-Date.now())/864e5)>1?'s':'')+'</div>'):''}
     <div class="fcard" id="rate">
       <div class="biglogo">${cfg.emoji||'⭐'}</div>
       <div class="biz">${esc(cfg.name)}</div>
